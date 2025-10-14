@@ -5,8 +5,11 @@ import { useState, useRef, useMemo } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { useSpring, a } from "@react-spring/three";
 import { easeQuadIn, easeQuadOut } from "d3-ease";
+import { useTheme } from "next-themes";
 
 import * as THREE from "three";
+import { Badge } from "./ui/badge";
+import { Card, CardDescription } from "./ui/card";
 
 // ==========================================================
 // The 3D Coin Component
@@ -73,7 +76,7 @@ function Coin() {
     // NEW: Animate both position and rotation
     const props = useSpring({
         from: {
-            position: [0, 0.1, 0] as [number, number, number],
+            position: [0, 0.15, 0] as [number, number, number],
             rotation: [0, 0, 0] as [number, number, number],
         },
         to: async (next) => {
@@ -182,10 +185,12 @@ function Coin() {
 // The Main Page Component
 // ==========================================================
 export default function CoinBox() {
+    const { theme } = useTheme();
+
     return (
-        <div style={{ width: "600px", height: "800px", background: "#1a1a1a" }}>
+        <div style={{ width: "500px", height: "800px", background: "#1a1a1a" }}>
             {/* The main 3D scene */}
-            <Canvas flat shadows camera={{ position: [0, 10, 7], fov: 40 }} gl={{ antialias: true }}>
+            <Canvas flat shadows camera={{ position: [0, 11, 7], fov: 40 }} gl={{ antialias: true }}>
                 {/* NEW: Adjusted lighting for a more moderate, focused look */}
                 <ambientLight intensity={1} />
                 <directionalLight
@@ -202,7 +207,7 @@ export default function CoinBox() {
                     {/* This uses MeshBasicMaterial, so it's not affected by light */}
                     <mesh position={[0, 0, 0]}>
                         <planeGeometry args={[60, 60]} />
-                        <meshBasicMaterial color="#ffffff" />
+                        <meshBasicMaterial color={theme === "light" ? "#ffffff" : "#171717"} />
                     </mesh>
 
                     {/* Plane 2: The invisible shadow catcher */}
@@ -214,12 +219,47 @@ export default function CoinBox() {
                     </mesh>
                 </group>
             </Canvas>
-            <div
-                className="relative bottom-64 text-center"
-            >
-                <h1>Flip the coin!</h1>
+
+            <div className="flex flex-col items-center relative bottom-64">
+                <div className="grid grid-cols-2 grid-rows-2 w-full text-center gap-x-2 gap-y-2 px-12">
+                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
+                        <p className="font-bold text-4xl">20</p>
+                        <CardDescription className="font-light">Session Flips</CardDescription>
+                    </div>
+                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
+                        <p className="font-bold text-4xl">2,000</p>
+                        <CardDescription className="font-light">Session Record</CardDescription>
+                    </div>
+                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
+                        <p className="font-bold text-4xl">20</p>
+                        <CardDescription className="font-light">All Time Flips</CardDescription>
+                    </div>
+                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
+                        <p className="font-bold text-4xl">20</p>
+                        <CardDescription className="font-light">All Time Record</CardDescription>
+                    </div>
+                </div>
             </div>
 
+            <div className="flex flex-col items-center relative bottom-56">
+                <p className="font-semibold">Recent Flips</p>
+                <div className="flex flex-row gap-1 mt-2">
+                    {Array(5).fill(0).map((_, index) => (
+                        <Badge key={index}>Heads</Badge> // `fill(0)` provides actual array elements
+                    ))}
+                </div>
+            </div >
+
+            <div className="flex flex-row justify-between relative -top-256 mx-8 bg-opacity-95">
+                <div className="text-start">
+                    <p className="font-bold text-4xl">Heads</p>
+                    <CardDescription className="font-light">Last Result</CardDescription>
+                </div>
+                <div className="text-end">
+                    <p className="font-bold text-4xl">20</p>
+                    <CardDescription className="font-light">Current Streak</CardDescription>
+                </div>
+            </div>
         </div>
     );
 }
