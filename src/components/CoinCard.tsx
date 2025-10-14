@@ -2,9 +2,21 @@ import { useFlip } from "@/contexts/FlipContext";
 import CoinBox from "./Coin";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
+import { Spinner } from "./ui/spinner";
+
+// 1. Import autoAnimate and the necessary React hooks
+import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { useRef, useEffect } from 'react'; // <--- Import these
+
 
 export default function CoinCard() {
     const { data, session } = useFlip();
+    const [parent, enableAnimations] = useAutoAnimate();
+
+
+    if (!data) {
+        return <Spinner />
+    }
 
     return (
         <Card>
@@ -33,11 +45,15 @@ export default function CoinCard() {
             <CardFooter>
                 <div className="flex flex-col items-center flex-1">
                     <CardDescription>Recent Flips</CardDescription>
-                    <div className="grid grid-cols-5 gap-2 mt-2 h-[20px]">
-                        {session.flips.slice(-5).map((flip, _) =>
-                            flip.result === "H" ?
-                                <Badge key={String(flip.timestamp)} className="w-full font-bold" variant="secondary">Heads</Badge> :
-                                <Badge key={String(flip.timestamp)} className="w-full font-bold" variant="outline">Tails</Badge>)}
+                    {/* 4. Attach the ref to the parent div of the badges */}
+                    <div className="grid grid-cols-10 gap-1 mt-2 items-start justify-end h-[20px]">
+                        {session.flips.slice(-10).map((flip) =>
+                            <Badge ref={parent} key={String(flip.timestamp)} // Ensure unique keys for animation
+                                className='w-full font-bold w-[50px]'
+                                variant={flip.result === 'H' ? "secondary" : "outline"}>
+                                {flip.result === "H" ? "Heads" : "Tails"}
+                            </Badge>
+                        )}
                     </div>
                 </div >
             </CardFooter>

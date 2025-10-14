@@ -1,16 +1,14 @@
 // app/page.tsx
 "use client";
 
-import { useState, useRef, useMemo, useEffect } from "react";
+import { a, useSpring } from "@react-spring/three";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { useSpring, a } from "@react-spring/three";
 import { easeQuadIn, easeQuadOut } from "d3-ease";
 import { useTheme } from "next-themes";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import * as THREE from "three";
-import { Badge } from "./ui/badge";
-import { CardDescription } from "./ui/card";
 import { useFlip } from "@/contexts/FlipContext";
+import * as THREE from "three";
 
 // ==========================================================
 // The 3D Coin Component
@@ -20,6 +18,7 @@ function Coin() {
     const { addFlip } = useFlip();
     const meshRef = useRef<THREE.Group>(null!);
     const [isFlipping, setIsFlipping] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     // Load textures for the coin faces
     const [
@@ -80,7 +79,7 @@ function Coin() {
     const props = useSpring({
         from: {
             position: [0, 0.3, 0] as [number, number, number],
-            rotation: [0, 0, 0] as [number, number, number],
+            rotation: [0, 90, 0] as [number, number, number],
         },
         to: async (next) => {
             if (isFlipping) {
@@ -93,19 +92,18 @@ function Coin() {
                 const outcomeRotation = outcome ? Math.PI : 0;
                 const endRotation = baseRotation + outcomeRotation;
 
-                await next({
-                    position: [0, 0.15, 0],
-                    rotation: [0, 0, 0],
-                    immediate: true, // This is the key! It makes the change instant.
-                });
-
                 // --- NEW: Multi-stage animation ---
                 // 1. Move the coin up in the air while spinning
+                await next({
+                    position: [0, 0.15, 0],
+                    rotation: [0, 90, 0],
+                    immediate: true, // This is the key! It makes the change instant.
+                });
 
                 await next({
                     position: [0, 4, 0],
                     // Animate to a point *before* the final rotation
-                    rotation: [endRotation * 0.5, 0, 0],
+                    rotation: [endRotation * 0.5, 90, 0],
                     config: { duration: 350, easing: easeQuadOut },
                 });
 
@@ -113,7 +111,7 @@ function Coin() {
                 await next({
                     position: [0, 0.15, 0], // Slightly above the ground
                     // Animate to the final, precise rotation
-                    rotation: [endRotation, 0, 0],
+                    rotation: [endRotation, 90, 0],
                     config: { duration: 600, easing: easeQuadIn },
                 });
 
@@ -122,6 +120,18 @@ function Coin() {
 
                 // --- Reset state ---
                 setIsFlipping(false);
+
+            } else if (isHovered && !isFlipping) {
+
+                await next({
+                    position: [0, 1, 0],
+                    config: { duration: 350, easing: easeQuadOut },
+                });
+            } else if (!isHovered) {
+                await next({
+                    position: [0, 0.15, 0],
+                    config: { duration: 350, easing: easeQuadOut },
+                });
             }
         },
         reset: false,
@@ -129,9 +139,24 @@ function Coin() {
 
     const handleCoinClick = () => {
         if (!isFlipping) {
+            setIsHovered(false);
             setIsFlipping(true);
         }
     };
+
+    const handleCoinHover = () => {
+        if (!isFlipping) {
+            document.body.style.cursor = "pointer";
+            setIsHovered(true);
+        }
+    }
+
+    const handleCoinUnhover = () => {
+        document.body.style.cursor = "auto";
+        setIsHovered(false);
+    }
+
+
 
     // Materials for the coin faces and edge
     const materials = [
@@ -170,8 +195,8 @@ function Coin() {
             ref={meshRef}
             {...props as any}
             onClick={handleCoinClick}
-            onPointerOver={() => (document.body.style.cursor = "pointer")}
-            onPointerOut={() => (document.body.style.cursor = "auto")}
+            onPointerOver={handleCoinHover}
+            onPointerOut={handleCoinUnhover}
         >
             <mesh
                 castShadow
@@ -218,22 +243,22 @@ export default function CoinBox() {
     const { theme } = useTheme();
 
 
-    const originalCanvasHeight = 600;
-    const originalCanvasWidth = 350;
+    const originalCanvasHeight = 900;
+    const originalCanvasWidth = 600;
 
     return (
-        <div className="w-[350px] h-[360px] rounded-xl ">
+        <div className="w-[600px] h-[600px]">
             <div style={{
                 width: `100%`,
                 height: `100%`
             }}>
                 {/* The main 3D scene */}
-                <Canvas flat shadows camera={{ position: [0, 13, 12], fov: 30 }} gl={{ antialias: true }}>
+                <Canvas shadows camera={{ position: [0, 20, 12], fov: 20 }} gl={{ antialias: true }}>
                     {/* NEW: Adjusted lighting for a more moderate, focused look */}
                     <CameraManager originalHeight={originalCanvasHeight} originalWidth={originalCanvasWidth} />
                     <ambientLight intensity={1} />
                     <directionalLight
-                        position={[5, 10, 7]}
+                        position={[5, 20, 7]}
                         intensity={2.5}
                         castShadow
                         shadow-mapSize-width={2048}
