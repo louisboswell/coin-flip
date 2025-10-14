@@ -151,14 +151,14 @@ export function HeadsChance() {
                             dataKey="heads"
                             stackId="a"
                             cornerRadius={5}
-                            fill="var(--chart-1)"
+                            fill="var(--chart-2)"
                             className="stroke-transparent stroke-2"
                             isAnimationActive={true}
                             animationDuration={800}
                         />
                         <RadialBar
                             dataKey="tails"
-                            fill="var(--chart-2)"
+                            fill="var(--chart-4)"
                             stackId="a"
                             cornerRadius={5}
                             className="stroke-transparent stroke-2"

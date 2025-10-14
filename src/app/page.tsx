@@ -4,6 +4,7 @@ import { HeadsChance } from "@/components/charts/HeadsChance";
 import { OutcomesOverSession } from "@/components/charts/OutcomesOverSession";
 import { StreakFrequencyOverCurrentSession } from "@/components/charts/StreakOverSession";
 import CoinCard from "@/components/CoinCard";
+import { ModeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
@@ -21,9 +22,7 @@ export default function HomePage() {
 			<CoinCard />
 			<div className="flex flex-col justify-between">
 				<div className="flex flex-col gap-2">
-					<Button variant="outline" className="rounded-xl">
-						<Sun />
-					</Button>
+					<ModeToggle />
 					<Button variant="outline" className="rounded-xl">
 						<Repeat />
 					</Button>

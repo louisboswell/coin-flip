@@ -162,15 +162,14 @@ function Coin() {
     const materials = [
         new THREE.MeshStandardMaterial({
             color: "#D3B856",
-            metalness: 0.8,
-            roughness: 0.2,
+            metalness: 0.7,
+            roughness: 1,
             normalMap: edgeNormal,
         }), // Side
         new THREE.MeshStandardMaterial({
             map: headsTexture, // <-- Use the modified texture
             metalness: 0.7,
-            roughness: 0.2,
-            transparent: true,
+            roughness: 1,
             normalMap: headsNormal,
             aoMap: headsAO,
             displacementMap: headsDisplacement,
@@ -180,8 +179,7 @@ function Coin() {
         new THREE.MeshStandardMaterial({
             map: tailsTexture, // <-- Use the modified texture
             metalness: 0.7,
-            roughness: 0.2,
-            transparent: true,
+            roughness: 1,
             normalMap: tailsNormal,
             aoMap: tailsAO,
             displacementMap: tailsDisplacement,
@@ -247,19 +245,19 @@ export default function CoinBox() {
     const originalCanvasWidth = 600;
 
     return (
-        <div className="w-[600px] h-[600px] rounded-xl overflow-hidden border">
+        <div className="w-[600px] h-[600px] rounded-xl overflow-hidden">
             <div style={{
                 width: `100%`,
                 height: `100%`
             }}>
                 {/* The main 3D scene */}
-                <Canvas shadows camera={{ position: [0, 20, 12], fov: 20 }} gl={{ antialias: true }}>
+                <Canvas flat shadows camera={{ position: [1, 20, 12], fov: 20 }} gl={{ antialias: true }}>
                     {/* NEW: Adjusted lighting for a more moderate, focused look */}
                     <CameraManager originalHeight={originalCanvasHeight} originalWidth={originalCanvasWidth} />
-                    <ambientLight intensity={1} />
+                    <ambientLight intensity={4} />
                     <directionalLight
-                        position={[5, 20, 7]}
-                        intensity={2.5}
+                        position={[5, 30, 1]}
+                        intensity={3}
                         castShadow
                         shadow-mapSize-width={2048}
                         shadow-mapSize-height={2048}

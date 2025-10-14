@@ -124,7 +124,7 @@ export function StreakFrequencyOverCurrentSession() {
                             />
                             <Bar
                                 dataKey="frequency"
-                                fill="var(--chart-1)"
+                                fill="var(--chart-2)"
                                 radius={8}
                             />
                         </BarChart>

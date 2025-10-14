@@ -107,14 +107,14 @@ export function OutcomesOverSession() {
                             <Line
                                 dataKey="heads"
                                 type="monotone"
-                                stroke="var(--chart-1)"
+                                stroke="var(--chart-2)"
                                 strokeWidth={2}
                                 dot={false}
                             />
                             <Line
                                 dataKey="tails"
                                 type="monotone"
-                                stroke="var(--chart-2)" // Use --chart-2 for tails
+                                stroke="var(--chart-4)" // Use --chart-2 for tails
                                 strokeWidth={2}
                                 dot={false}
                             />
