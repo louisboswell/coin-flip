@@ -8,7 +8,7 @@ import { FlipProvider } from "@/contexts/FlipContext";
 export const metadata: Metadata = {
 	title: "flipper",
 	description: "coin flipper",
-	icons: [{ rel: "icon", url: "/favicon.ico" }],
+	icons: [{ rel: "icon", url: "/img/heads/heads.png" }],
 };
 
 const geist = Geist({

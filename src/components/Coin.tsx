@@ -156,6 +156,20 @@ function Coin() {
         setIsHovered(false);
     }
 
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.code === "Space" && !isFlipping) {
+                event.preventDefault(); // Prevent default spacebar action (e.g., scrolling)
+                handleCoinClick();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isFlipping]);
 
 
     // Materials for the coin faces and edge

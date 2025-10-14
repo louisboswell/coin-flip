@@ -4,14 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "./ui/badge";
 import { Spinner } from "./ui/spinner";
 
-// 1. Import autoAnimate and the necessary React hooks
-import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { useRef, useEffect } from 'react'; // <--- Import these
-
 
 export default function CoinCard() {
     const { data, session } = useFlip();
-    const [parent, enableAnimations] = useAutoAnimate();
 
 
     if (!data) {
@@ -48,7 +43,7 @@ export default function CoinCard() {
                     {/* 4. Attach the ref to the parent div of the badges */}
                     <div className="grid grid-cols-10 gap-1 mt-2 items-start justify-end h-[20px]">
                         {session.flips.slice(-10).map((flip) =>
-                            <Badge ref={parent} key={String(flip.timestamp)} // Ensure unique keys for animation
+                            <Badge key={String(flip.timestamp)} // Ensure unique keys for animation
                                 className='w-full font-bold w-[50px]'
                                 variant={flip.result === 'H' ? "secondary" : "outline"}>
                                 {flip.result === "H" ? "Heads" : "Tails"}
