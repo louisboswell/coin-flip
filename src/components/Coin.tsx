@@ -112,7 +112,7 @@ function Coin() {
                     position: [0, 0.15, 0], // Slightly above the ground
                     // Animate to the final, precise rotation
                     rotation: [endRotation, 90, 0],
-                    config: { duration: 600, easing: easeQuadIn },
+                    config: { duration: 500, easing: easeQuadIn },
                 });
 
                 // --- NEW: Log the result to the console after animation ---
@@ -247,7 +247,7 @@ export default function CoinBox() {
     const originalCanvasWidth = 600;
 
     return (
-        <div className="w-[600px] h-[600px]">
+        <div className="w-[600px] h-[600px] rounded-xl overflow-hidden border">
             <div style={{
                 width: `100%`,
                 height: `100%`
