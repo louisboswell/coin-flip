@@ -1,6 +1,9 @@
+"use client";
+
 import { ChartLineMultiple } from "@/components/charts/FlipsOverTime";
 import { ChartPieSimple } from "@/components/charts/OutcomesPie";
 import CoinBox from "@/components/Coin";
+import SaveButton from "@/components/SaveButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -23,5 +26,6 @@ export default function HomePage() {
 			</Card>
 
 		</div>
+		{/* <SaveButton /> */}
 	</div>)
 }

@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { FlipProvider } from "@/contexts/FlipContext";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -26,7 +27,7 @@ export default function RootLayout({
 					defaultTheme="dark"
 					enableSystem
 					disableTransitionOnChange>
-					{children}
+					<FlipProvider>{children}</FlipProvider>
 				</ThemeProvider>
 			</body>
 		</html>
