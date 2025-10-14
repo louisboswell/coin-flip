@@ -1,18 +1,16 @@
 // app/page.tsx
 "use client";
 
-import { useState, useRef, useMemo } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
+import { useState, useRef, useMemo, useEffect } from "react";
+import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { useSpring, a } from "@react-spring/three";
 import { easeQuadIn, easeQuadOut } from "d3-ease";
 import { useTheme } from "next-themes";
 
 import * as THREE from "three";
 import { Badge } from "./ui/badge";
-import { Card, CardDescription } from "./ui/card";
+import { CardDescription } from "./ui/card";
 import { useFlip } from "@/contexts/FlipContext";
-import { Button } from "./ui/button";
-import { Save } from "lucide-react";
 
 // ==========================================================
 // The 3D Coin Component
@@ -81,7 +79,7 @@ function Coin() {
     // NEW: Animate both position and rotation
     const props = useSpring({
         from: {
-            position: [0, 0.15, 0] as [number, number, number],
+            position: [0, 0.3, 0] as [number, number, number],
             rotation: [0, 0, 0] as [number, number, number],
         },
         to: async (next) => {
@@ -141,7 +139,7 @@ function Coin() {
             color: "#D3B856",
             metalness: 0.8,
             roughness: 0.2,
-            normalMap: edgeNormal
+            normalMap: edgeNormal,
         }), // Side
         new THREE.MeshStandardMaterial({
             map: headsTexture, // <-- Use the modified texture
@@ -162,8 +160,7 @@ function Coin() {
             normalMap: tailsNormal,
             aoMap: tailsAO,
             displacementMap: tailsDisplacement,
-            displacementScale: 0.01
-
+            displacementScale: 0.01,
         }), // Tails
     ];
 
@@ -186,82 +183,81 @@ function Coin() {
     );
 }
 
+function CameraManager({ originalHeight, originalWidth }: { originalHeight: number, originalWidth: number }) {
+    const { camera, size } = useThree();
+
+    useEffect(() => {
+        // size.height is the *actual* height of the canvas (e.g., 640px)
+        // originalHeight is the *virtual* height we want the camera to base its perspective on (e.g., 800px)
+        if (size.width > 0 && size.height > 0) {
+            // setViewOffset(fullW, fullH, offsetX, offsetY, renderW, renderH)
+            camera.setViewOffset(
+                originalWidth,       // fullWidth: Use the actual canvas width
+                originalHeight,   // fullHeight: The VIRTUAL height for aspect calculation
+                0,                // x: Start from the left edge
+                0,                // y: Start from the top edge
+                size.width,       // width: Render the full width of the canvas
+                size.height       // height: Render the full (new) height of the canvas
+            );
+        }
+
+        camera.updateProjectionMatrix();
+        // Cleanup function to reset the camera if the component unmounts
+        return () => {
+            camera.clearViewOffset();
+        };
+    }, [camera, size, originalHeight]);
+
+    return null;
+}
+
 // ==========================================================
 // The Main Page Component
 // ==========================================================
 export default function CoinBox() {
     const { theme } = useTheme();
-    const { session, data } = useFlip();
+
+
+    const originalCanvasHeight = 600;
+    const originalCanvasWidth = 350;
 
     return (
-        <div style={{ width: "500px", height: "800px", background: "#1a1a1a" }}>
-            {/* The main 3D scene */}
-            <Canvas flat shadows camera={{ position: [0, 11, 7], fov: 40 }} gl={{ antialias: true }}>
-                {/* NEW: Adjusted lighting for a more moderate, focused look */}
-                <ambientLight intensity={1} />
-                <directionalLight
-                    position={[5, 10, 7]}
-                    intensity={2.5}
-                    castShadow
-                    shadow-mapSize-width={2048}
-                    shadow-mapSize-height={2048}
-                />
+        <div className="w-[350px] h-[360px] rounded-xl ">
+            <div style={{
+                width: `100%`,
+                height: `100%`
+            }}>
+                {/* The main 3D scene */}
+                <Canvas flat shadows camera={{ position: [0, 13, 12], fov: 30 }} gl={{ antialias: true }}>
+                    {/* NEW: Adjusted lighting for a more moderate, focused look */}
+                    <CameraManager originalHeight={originalCanvasHeight} originalWidth={originalCanvasWidth} />
+                    <ambientLight intensity={1} />
+                    <directionalLight
+                        position={[5, 10, 7]}
+                        intensity={2.5}
+                        castShadow
+                        shadow-mapSize-width={2048}
+                        shadow-mapSize-height={2048}
+                    />
 
-                <Coin />
-                <group rotation={[-Math.PI / 2, 0, 0]}>
-                    {/* Plane 1: The visible white background */}
-                    {/* This uses MeshBasicMaterial, so it's not affected by light */}
-                    <mesh position={[0, 0, 0]}>
-                        <planeGeometry args={[60, 60]} />
-                        <meshBasicMaterial color={theme === "light" ? "#faf7f5" : "#292524"} />
-                    </mesh>
+                    <Coin />
+                    <group rotation={[-Math.PI / 2, 0, 0]}>
+                        {/* Plane 1: The visible white background */}
+                        {/* This uses MeshBasicMaterial, so it's not affected by light */}
+                        <mesh position={[0, 0, 0]}>
+                            <planeGeometry args={[60, 60]} />
+                            <meshBasicMaterial color={theme === "light" ? "#faf7f5" : "#292524"} />
+                        </mesh>
 
-                    {/* Plane 2: The invisible shadow catcher */}
-                    {/* This uses ShadowMaterial, which is transparent everywhere */}
-                    {/* except for where shadows are cast. */}
-                    <mesh receiveShadow position={[0, 0, 0.001]}> {/* Tiny offset to prevent z-fighting */}
-                        <planeGeometry args={[40, 40]} />
-                        <shadowMaterial transparent opacity={0.4} />
-                    </mesh>
-                </group>
-            </Canvas>
-
-            <div className="flex flex-col items-center relative bottom-64">
-                <div className="grid grid-cols-2 grid-rows-2 w-full text-center gap-x-2 gap-y-2 px-12">
-                    <div className="border border-1 rounded-xl p-2 flex flex-col">
-                        <p className="font-bold text-4xl">{data.currentFlips}</p>
-                        <CardDescription className="font-light">Session Flips</CardDescription>
-                    </div>
-                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
-                        <p className="font-bold text-4xl">{data.currentStreak}</p>
-                        <CardDescription className="font-light">Session Record</CardDescription>
-                    </div>
-                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
-                        <p className="font-bold text-4xl">{data.historyFlips}</p>
-                        <CardDescription className="font-light">All Time Flips</CardDescription>
-                    </div>
-                    <div className="bg-card border border-1 rounded-xl p-2 flex flex-col">
-                        <p className="font-bold text-4xl">{data.historyStreak}</p>
-                        <CardDescription className="font-light">All Time Record</CardDescription>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex flex-col items-center relative bottom-56">
-                <p className="font-semibold mb-2">Recent Flips</p>
-                <div className="grid grid-cols-5 gap-2 h-[20px]">
-                    {session.flips.slice(-5).map((flip, _) =>
-                        flip.result === "H" ?
-                            <Badge key={String(flip.timestamp)} className="w-full font-bold" variant="secondary">Heads</Badge> :
-                            <Badge key={String(flip.timestamp)} className="w-full font-bold" variant="outline">Tails</Badge>)}
-                </div>
-            </div >
-
-            <div className="flex flex-row justify-between items-center relative -top-256 ml-8 mr-4 bg-opacity-95">
-                <div className="text-start">
-                    <p className="font-bold text-4xl">{data.currentStreak}</p>
-                    <CardDescription className="font-light">Current Streak</CardDescription>
-                </div>
+                        {/* Plane 2: The invisible shadow catcher */}
+                        {/* This uses ShadowMaterial, which is transparent everywhere */}
+                        {/* except for where shadows are cast. */}
+                        <mesh receiveShadow position={[0, 0, 0.001]}> {/* Tiny offset to prevent z-fighting */}
+                            <planeGeometry args={[40, 40]} />
+                            <shadowMaterial transparent opacity={0.4} />
+                        </mesh>
+                    </group>
+                </Canvas>
             </div>
         </div>
     );
