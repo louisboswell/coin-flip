@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Spinner } from "./ui/spinner";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils"; // Assuming you use this from shadcn
-import { playComboSound } from "@/lib/audio";
+import { playComboSound, playFailureSound } from "@/lib/audio";
 
 export default function CoinCard() {
     const { data, session } = useFlip();
@@ -15,17 +15,24 @@ export default function CoinCard() {
         "shaking" | "fading" | "idle"
     >("idle");
 
+    const [activeStreak, setActiveStreak] = useState<boolean>(false);
+
     useEffect(() => {
         if (!data) return;
 
         const newStreak = data.activeStreak;
 
-        if (newStreak > 1) {
+        if (newStreak >= 1) {
             setDisplayStreak(newStreak);
+            setActiveStreak(true);
             setAnimationState("shaking");
             // 2. Play the sound when the streak increases!
-            playComboSound(newStreak);
-        } else if (newStreak <= 1 && displayStreak > 1) {
+            playComboSound(newStreak + 1);
+        } else if (newStreak <= 1) {
+            if (activeStreak === true) {
+                playFailureSound();
+                setActiveStreak(false);
+            }
             setAnimationState("fading");
             const timer = setTimeout(() => {
                 setAnimationState("idle");

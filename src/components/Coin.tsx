@@ -3,7 +3,7 @@
 
 import { a, useSpring } from "@react-spring/three";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { easeQuadIn, easeQuadOut } from "d3-ease";
+import { easeBack, easeBackIn, easeQuadIn, easeQuadOut } from "d3-ease";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -14,7 +14,6 @@ import * as THREE from "three";
 // The 3D Coin Component
 // ==========================================================
 function Coin() {
-
     const { addFlip } = useFlip();
     const meshRef = useRef<THREE.Group>(null!);
     const [isFlipping, setIsFlipping] = useState(false);
@@ -34,112 +33,110 @@ function Coin() {
     ] = useLoader(THREE.TextureLoader, [
         "/img/heads/heads.png",
         "/img/heads/heads_normal.png",
-        "/img/heads/heads_ambient.png", // Your new AO map
-        "/img/heads/heads_displacement.png", // Your new Displacement map
+        "/img/heads/heads_ambient.png",
+        "/img/heads/heads_displacement.png",
         "/img/tails/tails.png",
         "/img/tails/tails_normal.png",
-        "/img/tails/tails_ambient.png", // Your new AO map
-        "/img/tails/tails_displacement.png", // Your new Displacement map
+        "/img/tails/tails_ambient.png",
+        "/img/tails/tails_displacement.png",
         "/img/edge/edge_displacement.png",
     ]);
 
-    if (!headsTexture || !tailsTexture || !headsNormal || !tailsNormal || !edgeNormal) {
-        return <div>
-            <p>No textures found.</p>
-        </div>
+    if (
+        !headsTexture ||
+        !tailsTexture ||
+        !headsNormal ||
+        !tailsNormal ||
+        !edgeNormal
+    ) {
+        return (
+            <div>
+                <p>No textures found.</p>
+            </div>
+        );
     }
 
     useMemo(() => {
-        // This tells the texture to tile instead of stretch
         edgeNormal.wrapS = THREE.RepeatWrapping;
-        // This sets how many times it tiles around the coin's circumference
-        edgeNormal.repeat.x = 30; // Tweak this number for finer/coarser ribs
+        edgeNormal.repeat.x = 30;
         edgeNormal.needsUpdate = true;
     }, [edgeNormal]);
 
-    const createModifiedTexture = (
-        texture: THREE.Texture,
-        zoom: number,
-        isDataTexture: boolean = false,
-    ): THREE.Texture => {
-        const cloned = texture.clone();
-        cloned.repeat.set(zoom, zoom);
-        const offset = (zoom - 1) / 2;
-        cloned.offset.set(-offset, -offset);
-
-        if (isDataTexture) {
-            cloned.colorSpace = THREE.NoColorSpace; // Critical for data textures
-        }
-
-        cloned.needsUpdate = true;
-        return cloned;
-    };
-
-    // NEW: Animate both position and rotation
-    const props = useSpring({
+    // 1. We get the imperative `api` from useSpring to control animations manually.
+    const [props, api] = useSpring(() => ({
+        // The coin's initial and resting state.
         from: {
-            position: [0, 0.3, 0] as [number, number, number],
+            position: [0, 0.15, 0] as [number, number, number],
             rotation: [0, 90, 0] as [number, number, number],
         },
-        to: async (next) => {
-            if (isFlipping) {
-                // --- Logic for determining outcome ---
-                const outcome = Math.random() < 0.5;
-                const result = outcome ? "Tails" : "Heads";
+    }));
 
-                const spins = 2;
-                const baseRotation = spins * Math.PI * 2;
-                const outcomeRotation = outcome ? Math.PI : 0;
-                const endRotation = baseRotation + outcomeRotation;
+    // 2. This useEffect handles the HOVER and UNHOVER animations.
+    useEffect(() => {
+        // We only want this to run if the coin is NOT flipping.
+        if (!isFlipping) {
+            api.start({
+                to: {
+                    position: isHovered ? [0, 1, 0] : [0, 0.15, 0], // Float up or down
+                },
+                config: { duration: 350, easing: easeQuadOut },
+            });
+        }
+    }, [isHovered, isFlipping, api]);
 
-                // --- NEW: Multi-stage animation ---
-                // 1. Move the coin up in the air while spinning
-                await next({
-                    position: [0, 0.15, 0],
-                    rotation: [0, 90, 0],
-                    immediate: true, // This is the key! It makes the change instant.
-                });
+    // 3. This useEffect handles the complex FLIP animation.
+    useEffect(() => {
+        if (isFlipping) {
+            api.start({
+                // The `to` function is now the clean, multi-stage async logic.
+                to: async (next) => {
+                    const outcome = Math.random() < 0.5;
+                    const result = outcome ? "Tails" : "Heads";
+                    const spins = 2;
 
-                await next({
-                    position: [0, 4, 0],
-                    // Animate to a point *before* the final rotation
-                    rotation: [endRotation * 0.5, 90, 0],
-                    config: { duration: 350, easing: easeQuadOut },
-                });
 
-                // 2. Let the coin fall back down while completing the spin
-                await next({
-                    position: [0, 0.15, 0], // Slightly above the ground
-                    // Animate to the final, precise rotation
-                    rotation: [endRotation, 90, 0],
-                    config: { duration: 500, easing: easeQuadIn },
-                });
+                    const randomSeed = Math.random();
+                    const baseRotation = spins * Math.PI * 2;
+                    const outcomeRotation = outcome ? Math.PI : 0;
+                    const endRotation = baseRotation + outcomeRotation;
 
-                // --- NEW: Log the result to the console after animation ---
-                addFlip(result === "Heads" ? "H" : "T")
+                    // Ensure coin starts from resting position before jumping up
+                    await next({
+                        position: [0, 0.15, 0],
+                        rotation: [0, 90, 0],
+                        immediate: true,
+                    });
 
-                // --- Reset state ---
-                setIsFlipping(false);
+                    // 1. Move up
+                    await next({
+                        position: [0, 3, 0],
+                        rotation: [endRotation * 0.3, 90, 0],
+                        config: { duration: 150, easing: easeQuadIn },
+                    });
 
-            } else if (isHovered && !isFlipping) {
+                    await next({
+                        position: [0, 4, 0],
+                        rotation: [endRotation * 0.8, 90, 0],
+                        config: { duration: 300, easing: easeQuadOut },
+                    });
 
-                await next({
-                    position: [0, 1, 0],
-                    config: { duration: 350, easing: easeQuadOut },
-                });
-            } else if (!isHovered) {
-                await next({
-                    position: [0, 0.15, 0],
-                    config: { duration: 350, easing: easeQuadOut },
-                });
-            }
-        },
-        reset: false,
-    });
+                    // 2. Fall down
+                    await next({
+                        position: [0, 0.15, 0],
+                        rotation: [endRotation, 90, 0],
+                        config: { duration: 300, easing: easeQuadOut },
+                    });
+
+                    addFlip(result === "Heads" ? "H" : "T");
+                    setIsFlipping(false); // Reset state after animation is complete
+                },
+            });
+        }
+    }, [isFlipping, api, addFlip]);
 
     const handleCoinClick = () => {
         if (!isFlipping) {
-            setIsHovered(false);
+            setIsHovered(false); // Ensure hover state is false before flipping
             setIsFlipping(true);
         }
     };
@@ -149,30 +146,26 @@ function Coin() {
             document.body.style.cursor = "pointer";
             setIsHovered(true);
         }
-    }
+    };
 
     const handleCoinUnhover = () => {
         document.body.style.cursor = "auto";
         setIsHovered(false);
-    }
+    };
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.code === "Space" && !isFlipping) {
-                event.preventDefault(); // Prevent default spacebar action (e.g., scrolling)
+                event.preventDefault();
                 handleCoinClick();
             }
         };
-
         window.addEventListener("keydown", handleKeyDown);
-
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
     }, [isFlipping]);
 
-
-    // Materials for the coin faces and edge
     const materials = [
         new THREE.MeshStandardMaterial({
             color: "#D3B856",
@@ -181,17 +174,16 @@ function Coin() {
             normalMap: edgeNormal,
         }), // Side
         new THREE.MeshStandardMaterial({
-            map: headsTexture, // <-- Use the modified texture
+            map: headsTexture,
             metalness: 0.7,
             roughness: 1,
             normalMap: headsNormal,
             aoMap: headsAO,
             displacementMap: headsDisplacement,
-            displacementScale: 0.01
-            // We can remove alphaTest as the transparent edge is now outside the mesh
+            displacementScale: 0.01,
         }), // Heads
         new THREE.MeshStandardMaterial({
-            map: tailsTexture, // <-- Use the modified texture
+            map: tailsTexture,
             metalness: 0.7,
             roughness: 1,
             normalMap: tailsNormal,
@@ -202,10 +194,9 @@ function Coin() {
     ];
 
     return (
-        // We go back to the simple, single-cylinder geometry
         <a.group
             ref={meshRef}
-            {...props as any}
+            {...(props as any)}
             onClick={handleCoinClick}
             onPointerOver={handleCoinHover}
             onPointerOut={handleCoinUnhover}
@@ -220,54 +211,57 @@ function Coin() {
     );
 }
 
-function CameraManager({ originalHeight, originalWidth }: { originalHeight: number, originalWidth: number }) {
+// ... the rest of your file (CameraManager, CoinBox) remains the same ...
+
+function CameraManager({
+    originalHeight,
+    originalWidth,
+}: {
+    originalHeight: number;
+    originalWidth: number;
+}) {
     const { camera, size } = useThree();
 
     useEffect(() => {
-        // size.height is the *actual* height of the canvas (e.g., 640px)
-        // originalHeight is the *virtual* height we want the camera to base its perspective on (e.g., 800px)
         if (size.width > 0 && size.height > 0) {
-            // setViewOffset(fullW, fullH, offsetX, offsetY, renderW, renderH)
             camera.setViewOffset(
-                originalWidth,       // fullWidth: Use the actual canvas width
-                originalHeight,   // fullHeight: The VIRTUAL height for aspect calculation
-                0,                // x: Start from the left edge
-                0,                // y: Start from the top edge
-                size.width,       // width: Render the full width of the canvas
-                size.height       // height: Render the full (new) height of the canvas
+                originalWidth,
+                originalHeight,
+                0,
+                0,
+                size.width,
+                size.height,
             );
         }
 
         camera.updateProjectionMatrix();
-        // Cleanup function to reset the camera if the component unmounts
         return () => {
             camera.clearViewOffset();
         };
-    }, [camera, size, originalHeight]);
+    }, [camera, size, originalHeight, originalWidth]);
 
     return null;
 }
 
-// ==========================================================
-// The Main Page Component
-// ==========================================================
 export default function CoinBox() {
     const { theme } = useTheme();
-
 
     const originalCanvasHeight = 900;
     const originalCanvasWidth = 600;
 
     return (
-        <div className="w-[600px] h-[550px] rounded-xl overflow-hidden">
-            <div style={{
-                width: `100%`,
-                height: `100%`
-            }}>
-                {/* The main 3D scene */}
+        <div className="h-[550px] w-[600px] overflow-hidden rounded-xl">
+            <div
+                style={{
+                    width: `100%`,
+                    height: `100%`,
+                }}
+            >
                 <Canvas flat shadows camera={{ position: [1, 20, 12], fov: 20 }} gl={{ antialias: true }}>
-                    {/* NEW: Adjusted lighting for a more moderate, focused look */}
-                    <CameraManager originalHeight={originalCanvasHeight} originalWidth={originalCanvasWidth} />
+                    <CameraManager
+                        originalHeight={originalCanvasHeight}
+                        originalWidth={originalCanvasWidth}
+                    />
                     <ambientLight intensity={4} />
                     <directionalLight
                         position={[5, 30, 1]}
@@ -279,17 +273,13 @@ export default function CoinBox() {
 
                     <Coin />
                     <group rotation={[-Math.PI / 2, 0, 0]}>
-                        {/* Plane 1: The visible white background */}
-                        {/* This uses MeshBasicMaterial, so it's not affected by light */}
                         <mesh position={[0, 0, 0]}>
                             <planeGeometry args={[60, 60]} />
-                            <meshBasicMaterial color={theme === "light" ? "#faf7f5" : "#292524"} />
+                            <meshBasicMaterial
+                                color={theme === "light" ? "#faf7f5" : "#292524"}
+                            />
                         </mesh>
-
-                        {/* Plane 2: The invisible shadow catcher */}
-                        {/* This uses ShadowMaterial, which is transparent everywhere */}
-                        {/* except for where shadows are cast. */}
-                        <mesh receiveShadow position={[0, 0, 0.001]}> {/* Tiny offset to prevent z-fighting */}
+                        <mesh receiveShadow position={[0, 0, 0.001]}>
                             <planeGeometry args={[40, 40]} />
                             <shadowMaterial transparent opacity={0.4} />
                         </mesh>

@@ -6,7 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { FlipProvider } from "@/contexts/FlipContext";
 
 export const metadata: Metadata = {
-	title: "flipper",
+	title: "coinflip",
 	description: "coinflip",
 	icons: [{ rel: "icon", url: "/img/heads/heads.png" }],
 };
