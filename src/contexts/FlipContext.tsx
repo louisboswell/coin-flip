@@ -9,6 +9,8 @@ interface FlipContextType {
     session: FlipSession;
     history: FlipHistory;
     data: FlipData;
+    resetSession: () => void;
+    deleteHistory: () => void;
     addFlip: (result: "H" | "T") => void;
 }
 
@@ -39,6 +41,12 @@ export const FlipProvider: React.FC<FlipProviderProps> = ({ children }) => {
         return;
     }, [flipHistory]);
 
+    const deleteHistory = () => {
+        if (typeof window !== 'undefined') {
+            const storedHistory = localStorage.clear();
+        }
+        return { sessions: [], record: 0 }; // Default empty history
+    }
     // Create a new session
     const startNewSession = useCallback(() => {
         setFlipHistory(prevHistory => ({ ...prevHistory, sessions: [...prevHistory.sessions, { id: crypto.randomUUID(), flips: [], record: 0 }] }));
@@ -157,7 +165,6 @@ export const FlipProvider: React.FC<FlipProviderProps> = ({ children }) => {
         return maxRecord;
     }, [flipHistory]);
 
-
     const contextValue: FlipContextType = {
         session: session,
         history: flipHistory,
@@ -166,8 +173,11 @@ export const FlipProvider: React.FC<FlipProviderProps> = ({ children }) => {
             currentFlips: currentFlips,
             currentStreak: session.record,
             historyFlips: historyFlips,
-            historyStreak: historyStreak
-        }
+            historyStreak: historyStreak,
+            activeStreak: currentStreak
+        },
+        resetSession: startNewSession,
+        deleteHistory: deleteHistory,
     };
 
     // --- FIX: Add the missing return statement ---

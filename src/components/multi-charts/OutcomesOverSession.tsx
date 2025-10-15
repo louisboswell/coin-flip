@@ -121,7 +121,7 @@ export function OutcomesChart({ scope }: OutcomesChartProps) {
             </CardHeader>
             <CardContent>
                 {chartData.length > 0 ? (
-                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                    <ChartContainer config={chartConfig} className="h-[150px] w-full">
                         <LineChart
                             accessibilityLayer
                             data={chartData}
@@ -158,8 +158,8 @@ export function OutcomesChart({ scope }: OutcomesChartProps) {
                         </LineChart>
                     </ChartContainer>
                 ) : (
-                    <div className="flex h-[200px] items-center justify-center text-muted-foreground">
-                        {emptyStateMessage}
+                    <div className="flex h-[150px] items-center justify-center text-muted-foreground mx-12">
+                        <CardDescription>{emptyStateMessage}</CardDescription>
                     </div>
                 )}
             </CardContent>

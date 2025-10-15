@@ -1,57 +1,129 @@
 import { useFlip } from "@/contexts/FlipContext";
 import CoinBox from "./Coin";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardDescription, CardFooter } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Spinner } from "./ui/spinner";
-
+import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils"; // Assuming you use this from shadcn
+import { playComboSound } from "@/lib/audio";
 
 export default function CoinCard() {
     const { data, session } = useFlip();
 
+    const [displayStreak, setDisplayStreak] = useState(0);
+    const [animationState, setAnimationState] = useState<
+        "shaking" | "fading" | "idle"
+    >("idle");
+
+    useEffect(() => {
+        if (!data) return;
+
+        const newStreak = data.activeStreak;
+
+        if (newStreak > 1) {
+            setDisplayStreak(newStreak);
+            setAnimationState("shaking");
+            // 2. Play the sound when the streak increases!
+            playComboSound(newStreak);
+        } else if (newStreak <= 1 && displayStreak > 1) {
+            setAnimationState("fading");
+            const timer = setTimeout(() => {
+                setAnimationState("idle");
+            }, 700);
+            return () => clearTimeout(timer);
+        }
+    }, [data?.activeStreak, displayStreak]);
+
+    // ... the rest of your component logic remains the same
+    const comboFontSize = useMemo(() => {
+        if (displayStreak <= 1) return "0.75rem";
+        const baseSize = 1.25;
+        const increment = 0.15;
+        const maxSize = 3;
+        const calculatedSize = baseSize + (displayStreak - 2) * increment;
+        return `${Math.min(calculatedSize, maxSize)}rem`;
+    }, [displayStreak]);
 
     if (!data) {
-        return <Spinner />
+        return <Spinner />;
     }
 
     return (
-        <Card>
+        <Card className="relative">
+            <div
+                className="
+          pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2
+          rounded-full bg-background/80 px-4 py-1 backdrop-blur-sm
+        "
+            >
+                {data.activeStreak > 1 ? (
+                    // 2. This is the new animated combo counter
+                    <p
+                        // The KEY is crucial. Changing it forces React to re-render
+                        // the element, which restarts the CSS animation.
+                        key={data.activeStreak}
+                        className={cn(
+                            "animate-balatro-shake font-black text-amber-400",
+                            "drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]", // A sharper drop shadow
+                        )}
+                        // 3. Apply the dynamic font size calculated above.
+                        style={{ fontSize: comboFontSize }}
+                    >
+                        {`x${data.activeStreak} COMBO`}
+                    </p>
+                ) : (
+                    <p className="text-xs font-semibold text-muted-foreground">
+                        Click Coin or Press Space
+                    </p>
+                )}
+            </div>
+
             <CardContent>
                 <CoinBox />
-                <div className="grid grid-cols-2 grid-rows-2 w-full text-5xl text-center gap-x-2 gap-y-2 px-4 mt-4">
-                    <div className="rounded-xl p-2 flex flex-col border-1 bg-muted">
+                <div className="mt-4 grid w-full grid-cols-2 grid-rows-2 gap-x-2 gap-y-2 px-4 text-center text-5xl">
+                    <div className="flex flex-col rounded-xl border-1 bg-muted p-2">
                         <p className="font-bold">{data.currentFlips}</p>
-                        <CardDescription className="font-light">Session Flips</CardDescription>
+                        <CardDescription className="font-light">
+                            Session Flips
+                        </CardDescription>
                     </div>
-                    <div className="rounded-xl p-2 flex flex-col border-1 bg-muted">
+                    <div className="flex flex-col rounded-xl border-1 bg-muted p-2">
                         <p className="font-bold">{data.currentStreak}</p>
-                        <CardDescription className="font-light">Session Record</CardDescription>
+                        <CardDescription className="font-light">
+                            Session Record
+                        </CardDescription>
                     </div>
-                    <div className="rounded-xl p-2 flex flex-col border-1 bg-muted">
+                    <div className="flex flex-col rounded-xl border-1 bg-muted p-2">
                         <p className="font-bold">{data.historyFlips}</p>
-                        <CardDescription className="font-light">All Time Flips</CardDescription>
+                        <CardDescription className="font-light">
+                            All Time Flips
+                        </CardDescription>
                     </div>
-                    <div className="rounded-xl p-2 flex flex-col border-1 bg-muted">
+                    <div className="flex flex-col rounded-xl border-1 bg-muted p-2">
                         <p className="font-bold">{data.historyStreak}</p>
-                        <CardDescription className="font-light">All Time Record</CardDescription>
+                        <CardDescription className="font-light">
+                            All Time Record
+                        </CardDescription>
                     </div>
                 </div>
             </CardContent>
 
             <CardFooter>
-                <div className="flex flex-col items-center flex-1">
+                <div className="flex flex-1 flex-col items-center">
                     <CardDescription>Recent Flips</CardDescription>
-                    {/* 4. Attach the ref to the parent div of the badges */}
-                    <div className="grid grid-cols-10 gap-1 mt-2 items-start justify-end h-[20px]">
-                        {session.flips.slice(-10).map((flip) =>
-                            <Badge key={String(flip.timestamp)} // Ensure unique keys for animation
-                                className='w-full font-bold w-[50px]'
-                                variant={flip.result === 'H' ? "secondary" : "outline"}>
+                    <div className="mt-2 grid h-[20px] grid-cols-10 items-start justify-end gap-1">
+                        {session.flips.slice(-10).map((flip) => (
+                            <Badge
+                                key={String(flip.timestamp)}
+                                className="w-full w-[50px] font-bold"
+                                variant={flip.result === "H" ? "secondary" : "outline"}
+                            >
                                 {flip.result === "H" ? "Heads" : "Tails"}
                             </Badge>
-                        )}
+                        ))}
                     </div>
-                </div >
+                </div>
             </CardFooter>
         </Card>
-    )
+    );
 }

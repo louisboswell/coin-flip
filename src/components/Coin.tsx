@@ -259,7 +259,7 @@ export default function CoinBox() {
     const originalCanvasWidth = 600;
 
     return (
-        <div className="w-[600px] h-[600px] rounded-xl overflow-hidden">
+        <div className="w-[600px] h-[550px] rounded-xl overflow-hidden">
             <div style={{
                 width: `100%`,
                 height: `100%`

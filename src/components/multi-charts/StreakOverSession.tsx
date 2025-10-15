@@ -104,7 +104,7 @@ export function StreakFrequencyChart({ scope }: StreakFrequencyChartProps) {
             </CardHeader>
             <CardContent>
                 {chartData.length > 0 ? (
-                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                    <ChartContainer config={chartConfig} className="h-[200px] w-full">
                         <BarChart accessibilityLayer data={chartData}>
                             <CartesianGrid vertical={false} />
                             <XAxis
@@ -134,8 +134,8 @@ export function StreakFrequencyChart({ scope }: StreakFrequencyChartProps) {
                         </BarChart>
                     </ChartContainer>
                 ) : (
-                    <div className="flex h-[200px] items-center justify-center text-muted-foreground">
-                        {emptyStateMessage}
+                    <div className="flex h-[200px] items-center justify-center text-muted-foreground mx-12">
+                        <CardDescription>{emptyStateMessage}</CardDescription>
                     </div>
                 )}
             </CardContent>

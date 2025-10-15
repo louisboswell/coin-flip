@@ -18,5 +18,6 @@ export interface FlipData {
     currentStreak: number,
     historyStreak: number,
     currentFlips: number,
-    historyFlips: number
+    historyFlips: number,
+    activeStreak: number
 }
